@@ -3,6 +3,7 @@ import time
 import onewire
 import ds18x20
 from machine import Pin
+from utils import retry
 
 
 class Dht:
@@ -31,6 +32,7 @@ class Dht:
             #time.sleep(2)
         self._measured = not self._measured
 
+    @retry(sleep_between_s=3)
     def temperature(self):
         if not self._sensor:
             return float('nan')
@@ -38,6 +40,7 @@ class Dht:
         self._measure()
         return self._temp_calibration(self._sensor.temperature())
 
+    @retry(sleep_between_s=3)
     def humidity(self):
         if not self._sensor:
             return float('nan')
@@ -58,6 +61,7 @@ class Ds18x20:
             ow = onewire.OneWire(Pin(pin_nr, Pin.IN, Pin.PULL_UP))
             self._sensor = ds18x20.DS18X20(ow)
 
+    @retry(sleep_between_s=3)
     def temperature(self):
         if not self._sensor:
             return float('nan')

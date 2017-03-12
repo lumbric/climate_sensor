@@ -6,6 +6,7 @@ import network
 import ntptime
 import sensors
 from config import CONFIG
+from utils import retry
 
 
 URL_DATA_STORE = '{host}/input/{pubkey}?private_key={privkey}&{fields}'
@@ -36,6 +37,13 @@ def setup_network():
     while sta_if.ifconfig()[0] == '0.0.0.0':
         time.sleep(0.3)
     print("Success! New network config:", sta_if.ifconfig())
+
+
+@retry(sleep_between_s=5, error_msg="Error setting up network or NTP")
+def setup_network_and_time():
+    setup_network()
+    print("Retrieve time via NTP...", end='')
+    ntptime.settime()
 
 
 def get_wifi_signal():
@@ -89,6 +97,7 @@ def http_get(url):
 
 
 def send_data(fields):
+    # TODO use retry decorator
     for _ in range(10):
         try:
             answer = http_get(generate_api_uri(**fields))
@@ -121,9 +130,7 @@ def good_night():
 def main():
     CONFIG.read()
 
-    # TODO this might raise, add retries
-    setup_network()
-    ntptime.settime()
+    setup_network_and_time()
 
     dht_sensor = sensors.Dht(
         CONFIG.sensor_dht_pin, CONFIG.sensor_dht_type,

@@ -66,6 +66,7 @@ def generate_api_uri(**fields):
 
 
 def http_get(url):
+    print("GET {}".format(url))
     # from https://docs.micropython.org/en/latest/esp8266/esp8266/tutorial/network_tcp.html
     _, _, host, path = url.split('/', 3)
     if ':' in host:

@@ -82,8 +82,8 @@ class Config(object):
 
     def _read(self):
         if not file_exists(self.filename):
-            raise ValueError("{} not found. Run 'import setup' to"
-                             " generate config.".format(self.filename))
+            raise ValueError("{} not found. Run 'import config; config.setup()'"
+                             "to generate config.".format(self.filename))
         with open(self.filename, 'r') as f:
             data = json.load(f)
         return data

@@ -110,9 +110,11 @@ def send_data(fields):
 
 
 def good_night():
+    print("Good night!")
     rtc = machine.RTC()
     rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
     rtc.alarm(rtc.ALARM0, CONFIG.update_period * 1000)
+    machine.deepsleep()
 
 
 def main():
@@ -146,8 +148,8 @@ def main():
         if CONFIG.sleep_between_measurements:
             if machine.reset_cause() != machine.DEEPSLEEP_RESET:
                 # allows easier reflashing if done in 30s after powerup
-                print("Wait 30s...")
-                time.sleep(30)
+                print("Wait 10s...")
+                time.sleep(10)
 
             # in this case while loop is useless, because after wake up it will
             # start from begin

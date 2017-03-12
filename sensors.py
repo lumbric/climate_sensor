@@ -32,18 +32,18 @@ class Dht:
         self._measured = not self._measured
 
     def temperature(self):
-        if self._sensor:
-            self._measure()
-            return self._temp_calibration(self._sensor.temperature())
-        else:
-            return 0.
+        if not self._sensor:
+            return float('nan')
+
+        self._measure()
+        return self._temp_calibration(self._sensor.temperature())
 
     def humidity(self):
-        if self._sensor:
-            self._measure()
-            return self._humid_calibration(self._sensor.humidity())
-        else:
-            return 0.
+        if not self._sensor:
+            return float('nan')
+
+        self._measure()
+        return self._humid_calibration(self._sensor.humidity())
 
 
 class Ds18x20:
@@ -60,11 +60,11 @@ class Ds18x20:
 
     def temperature(self):
         if not self._sensor:
-            return 0.
+            return float('nan')
         roms = self._sensor.scan()
         self._sensor.convert_temp()
         time.sleep_ms(750)
         for rom in roms:
             return self._calibration(self._sensor.read_temp(rom))
         else:
-            return 0.
+            return float('nan')

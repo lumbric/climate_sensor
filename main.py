@@ -16,9 +16,6 @@ API_PATH = {
 }
 
 
-# Choose if DHT11 or DHT22 is used
-DHT = dht.DHT22
-
 FIELD_NAME_TRANSLATION = {
     'thingspeak': {
         'temperature1': 'field1',

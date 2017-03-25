@@ -9,10 +9,29 @@ from config import CONFIG
 from utils import retry
 
 
-URL_DATA_STORE = '{host}/input/{pubkey}?private_key={privkey}&{fields}'
+# can be also specified via config manually
+API_PATH = {
+    'phant': '{host}/input/{pubkey}?private_key={privkey}&{fields}',
+    'thingspeak': '{host}/update?api_key={privkey}&{fields}',
+}
+
 
 # Choose if DHT11 or DHT22 is used
 DHT = dht.DHT22
+
+FIELD_NAME_TRANSLATION = {
+    'thingspeak': {
+        'temperature1': 'field1',
+        'temperature2': 'field2',
+        'humidity': 'field3',
+        'comment': 'field4',
+        'time': 'field5',
+        'location': 'field6',
+        'wifi_signal': 'field7',
+        'supply_voltage': 'field8',
+    }
+}
+
 
 # Micropython uses seconds since 2000 instead since 1970
 UNIX_EPOCH_DELTA = 946684800
@@ -65,7 +84,10 @@ def get_wifi_signal():
 
 def generate_api_uri(**fields):
     fields_str = "&".join("{}={}".format(k, v) for k, v in fields.items())
-    return URL_DATA_STORE.format(
+    api_path = CONFIG.api_path
+    if api_path == '-':
+        api_path = API_PATH[CONFIG.api_name]
+    return api_path.format(
         host=CONFIG.host.rstrip('/'),
         pubkey=CONFIG.api_pub_key,
         privkey=CONFIG.api_private_key,
@@ -94,6 +116,14 @@ def http_get(url):
         else:
             break
     return answer
+
+
+def translate_field_names(fields, api_name):
+    if api_name not in FIELD_NAME_TRANSLATION:
+        # no translation necessary...
+        return fields
+    return {FIELD_NAME_TRANSLATION[api_name][name]: value
+            for name, value in fields.items()}
 
 
 def send_data(fields):
@@ -151,7 +181,9 @@ def main():
             'supply_voltage': 0  # TODO   https://forum.micropython.org/viewtopic.php?t=533
         }
         print("Record:", fields)
-        send_data(fields)
+
+        fields_translated = translate_field_names(fields, CONFIG.api_name)
+        send_data(fields_translated)
 
         if CONFIG.sleep_between_measurements:
             if machine.reset_cause() != machine.DEEPSLEEP_RESET:

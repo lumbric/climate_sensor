@@ -109,6 +109,8 @@ class Config(object):
         self._check_schema(self._data)
 
 
+
+
 CONFIG_DATA = (
     ('sensor_dht_pin', int, 'Pin for data to DHT chip, use -1 to disable', 2),
     ('sensor_dht_type', str, 'Type of DHT sensory - either "DHT11" (blue) or "DHT22" (white)', 'DHT11'),
@@ -123,7 +125,15 @@ CONFIG_DATA = (
     ('location', str, 'Where is the sensore located?', '-'),
     ('api_pub_key', str, 'Public API key', None),
     ('api_private_key', str, 'Private API key', None),
-    ('host', str, 'Host and port for phant server (something like http://HOST:PORT/ or https://HOST/ or so)', 'http://m33x7:8888/'),
+    ('host', str, 'Host and port for phant server (something like http://HOST:PORT/ or https://HOST/ or so), e.g:\n'
+                  'phant: https://data.sparkfun.com/input\n'
+                  'thingspeak: https://api.thingspeak.com/\n',
+     'http://m33x7:8888/'),
+    ('api_name', str, 'Specify API: "phant", "thingspeak", "-"', 'phant'),
+    ('api_path', str, 'Path for HTTP GET request (without host), e.g.:\n'
+                     '{host}/input/{pubkey}?private_key={privkey}&{fields}\n'
+                     '(use "-" to set automatically via api_name)\n',
+     '-'),
     ('wifi_ssid', str, 'WIFI SSID', None),
     ('wifi_passwd', str, 'WIFI password', None),
     ('dht_temp_calibration', _callable, 'Temperatur calibration', 'x'),

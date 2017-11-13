@@ -34,6 +34,17 @@ FIELD_NAME_TRANSLATION = {
 UNIX_EPOCH_DELTA = 946684800
 
 
+def log(msg, level='INFO'):
+    now = "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}".format(*time.localtime())
+    line = "{}: {}: {}".format(level, now, msg)
+    print(line)
+    try:
+        with open('log', 'a') as f:
+            f.write(line + "\n")
+    except:
+        print("Oh no! Cannot log to file!")
+
+
 def setup_network():
     # disable access point
     ap_if = network.WLAN(network.AP_IF)
@@ -196,4 +207,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    while True:
+        try:
+            log("Startup...")
+            main()
+        except Exception as e:
+            log("Unknown error: {!s}".format(e), level='ERROR')

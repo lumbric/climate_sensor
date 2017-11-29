@@ -38,11 +38,12 @@ def log(msg, level='INFO'):
     now = "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}".format(*time.localtime())
     line = "{}: {}: {}".format(level, now, msg)
     print(line)
-    try:
-        with open('log', 'a') as f:
-            f.write(line + "\n")
-    except:
-        print("Oh no! Cannot log to file!")
+    if level== 'ERROR':
+        try:
+            with open('log', 'a') as f:
+                f.write(line + "\n")
+        except:
+            print("Oh no! Cannot log to file!")
 
 
 def setup_network():

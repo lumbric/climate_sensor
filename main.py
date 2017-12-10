@@ -1,3 +1,4 @@
+import os
 import dht
 import time
 import socket
@@ -29,6 +30,7 @@ FIELD_NAME_TRANSLATION = {
     }
 }
 
+MAX_LOG_SIZE = 10000
 
 # Micropython uses seconds since 2000 instead since 1970
 UNIX_EPOCH_DELTA = 946684800
@@ -38,39 +40,47 @@ def log(msg, level='INFO'):
     now = "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}".format(*time.localtime())
     line = "{}: {}: {}".format(level, now, msg)
     print(line)
-    if level== 'ERROR':
-        try:
-            with open('log', 'a') as f:
-                f.write(line + "\n")
-        except:
-            print("Oh no! Cannot log to file!")
+
+    try:
+        if 'log' in os.listdir() and os.stat('log')[6] > MAX_LOG_SIZE:
+            os.remove('log')
+    except:
+        print("Oh no! Could not rotate log.")
+
+    try:
+        with open('log', 'a') as f:
+            f.write(line + "\n")
+    except:
+        print("Oh no! Cannot log to file!")
+
+
 
 
 def setup_network():
     # disable access point
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(False)
-    print("Disabling Access point...")
+    log("Disabling Access point...")
     #print(ap_if.ifconfig())
 
     # TODO set hostname
 
     # connect to WIFI as station
-    print("Connecting to WIFI as client...")
+    log("Connecting to WIFI as client...")
     sta_if = network.WLAN(network.STA_IF)
     sta_if.active(True)
     sta_if.connect(CONFIG.wifi_ssid, CONFIG.wifi_passwd)
-    print("Network config:", sta_if.ifconfig())
-    print("Waiting for network...")
+    log("Network config: {}".format(sta_if.ifconfig()))
+    log("Waiting for network...")
     while sta_if.ifconfig()[0] == '0.0.0.0':
         time.sleep(0.3)
-    print("Success! New network config:", sta_if.ifconfig())
+    log("Success! New network config: {}".format(sta_if.ifconfig()))
 
 
 @retry(sleep_between_s=5, error_msg="Error setting up network or NTP")
 def setup_network_and_time():
     setup_network()
-    print("Retrieve time via NTP...", end='')
+    log("Retrieve time via NTP...")
     ntptime.settime()
 
 
@@ -83,7 +93,7 @@ def get_wifi_signal():
     scan = sta_if.scan()
     wifi = [wifi for wifi in scan if wifi[0].decode('ascii') == CONFIG.wifi_ssid]
     if len(wifi) != 1:
-        print ("Error: scan ")
+        log("Error: scan ")
         return float('nan')
     wifi = wifi[0]
 
@@ -105,7 +115,7 @@ def generate_api_uri(**fields):
 
 
 def http_get(url):
-    print("GET {}".format(url))
+    log("GET {}".format(url))
     # from https://docs.micropython.org/en/latest/esp8266/esp8266/tutorial/network_tcp.html
     _, _, host, path = url.split('/', 3)
     if ':' in host:
@@ -141,25 +151,25 @@ def send_data(fields):
         try:
             answer = http_get(generate_api_uri(**fields))
             if (answer.startswith('HTTP/1.1 200 OK')):
-                print("Sent data to server: {}".format(fields))
+                log("Sent data to server: {}".format(fields))
             else:
                 raise RuntimeError(
                     "Error: Could not save Data, server "
                     "response: {}".format(answer))
         except OSError:
-            print("Error: network failure (host not reached).")
+            log("Error: network failure (host not reached).")
         except RuntimeError as e:
-            print(e)
+            log(e)
         else:
             break
         time.sleep(3)
     else:
-        print("Failed storing data, not retrying more often until next "
-              "measurement.")
+        log("Failed storing data, not retrying more often until next "
+            "measurement.")
 
 
 def good_night():
-    print("Good night!")
+    log("Good night!")
     rtc = machine.RTC()
     rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
     rtc.alarm(rtc.ALARM0, CONFIG.update_period * 1000)
@@ -189,7 +199,7 @@ def main():
             'wifi_signal': get_wifi_signal(),
             'supply_voltage': 0  # TODO   https://forum.micropython.org/viewtopic.php?t=533
         }
-        print("Record:", fields)
+        log("Record:", fields)
 
         fields_translated = translate_field_names(fields, CONFIG.api_name)
         send_data(fields_translated)
@@ -197,7 +207,7 @@ def main():
         if CONFIG.sleep_between_measurements:
             if machine.reset_cause() != machine.DEEPSLEEP_RESET:
                 # allows easier reflashing if done in 30s after powerup
-                print("Wait 10s...")
+                log("Wait 10s...")
                 time.sleep(10)
 
             # in this case while loop is useless, because after wake up it will
